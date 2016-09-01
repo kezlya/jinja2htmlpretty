@@ -10,16 +10,18 @@ class TestHtmlPretty(unittest.TestCase):
         env = Environment(extensions=[HTMLPretty])
         case = 'something wrong'
         expected = 'wrong something'
-        with open('test_case1.html', 'r') as f:
+        with open('test_case.tpl', 'r') as f:
             case = f.read()
-        with open('test_assert1.html', 'r') as f:
+        with open('test_expected.html', 'r') as f:
             expected = f.read()
 
         # Act
         tmpl = env.from_string(case)
-        result = tmpl.render(title='Hello tests',)
+        result = tmpl.render(title='Hello tests')
 
         # Assert
+        with open('test_result.html', 'w') as file_:
+            file_.write(result)
         self.compare_html(expected, result)
 
     def compare_html(self, expected, result):
@@ -30,7 +32,9 @@ class TestHtmlPretty(unittest.TestCase):
         msg = ''
         for i in xrange(length):
             if expected[i] != result[i]:
-                msg = "Discrepancy on char {0}:\nExpected:\n{1}\nResult:\n{2}".format(
+                msg = "Discrepancy on char {0}:\n" \
+                      "Expected:\n{1}\n" \
+                      "Result:\n{2}".format(
                     i,
                     expected[:i],
                     result[:i])

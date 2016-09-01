@@ -2,7 +2,7 @@
 
 <html class="no-js"
   lang="en"
-  dir="ltr" i
+  dir="ltr"
   temscope
   itemtype ="https://schema.org/WebSite  "   >
 
