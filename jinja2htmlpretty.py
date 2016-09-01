@@ -100,7 +100,7 @@ class HTMLPretty(Extension):
         buffer = []
         def write_data(value):
             if not self.is_isolated(ctx.stack):
-                value = _ws_normalize_re.sub(' ', value)
+                value = _ws_normalize_re.sub(' ', value.strip())
             buffer.append(value)
 
         for match in _tag_re.finditer(ctx.token.value):

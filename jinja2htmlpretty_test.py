@@ -27,12 +27,13 @@ class TestHtmlPretty(unittest.TestCase):
             length = len(expected)
         else:
             length = len(result)
+        msg = ''
         for i in xrange(length):
             if expected[i] != result[i]:
                 msg = "Discrepancy on char {0}:\nExpected:\n{1}\nResult:\n{2}".format(
                     i,
-                    expected[:i+5],
-                    result[:i+5])
+                    expected[:i],
+                    result[:i])
                 break
 
         self.assertEqual('', msg, msg)
