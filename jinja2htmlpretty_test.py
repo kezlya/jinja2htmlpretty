@@ -4,27 +4,42 @@ from jinja2htmlpretty import HTMLPretty
 
 
 class TestHtmlPretty(unittest.TestCase):
+    def setUp(self):
+        self.env = Environment(extensions=[HTMLPretty])
 
-    def test_final_output(self):
+    def test_around_brackets(self):
         # Arrange
-        env = Environment(extensions=[HTMLPretty])
-        case = 'something wrong'
-        expected = 'wrong something'
-        with open('test_case.tpl', 'r') as f:
-            case = f.read()
-        with open('test_expected.html', 'r') as f:
-            expected = f.read()
+        html = '''  \n\t\r  <  \n\t\r  a href="#"  \n\t\r  >  \n\t\r
+         white < / br > spaces < br / > around brackets  \n\t\r
+         <  \n\t\r  /  \n\t\r  a  \n\t\r  >  \n\t\r  '''
+        expected = '<a href="#">white</br>spaces<br />around brackets</a>'
 
         # Act
-        tmpl = env.from_string(case)
-        result = tmpl.render(title='Hello tests')
+        tmpl = self.env.from_string(html)
+        result = tmpl.render()
 
         # Assert
-        with open('test_result.html', 'w') as file_:
-            file_.write(result)
-        self.compare_html(expected, result)
+        self._compare_html(expected, result)
 
-    def compare_html(self, expected, result):
+    #def test_final_output(self):
+    #    # Arrange
+    #    case = 'something wrong'
+    #    expected = 'wrong something'
+    #    with open('test_case.tpl', 'r') as f:
+    #        case = f.read()
+    #    with open('test_expected.html', 'r') as f:
+    #        expected = f.read()
+
+    #    # Act
+    #    tmpl = self.env.from_string(case)
+    #    result = tmpl.render(title='Hello tests')
+
+    #    # Assert
+    #    with open('test_result.html', 'w') as file_:
+    #        file_.write(result)
+    #    self._compare_html(expected, result)
+
+    def _compare_html(self, expected, result):
         if len(expected) <= len(result):
             length = len(expected)
         else:
@@ -36,11 +51,11 @@ class TestHtmlPretty(unittest.TestCase):
                       "Expected:\n{1}\n" \
                       "Result:\n{2}".format(
                     i,
-                    expected[:i],
-                    result[:i])
+                    expected,
+                    result)
                 break
-
         self.assertEqual('', msg, msg)
+
 
 if __name__ == '__main__':
     unittest.main()
