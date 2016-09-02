@@ -8,6 +8,7 @@ class TestHtmlPretty(unittest.TestCase):
         self.env = Environment(extensions=[HTMLPretty])
 
     def test_around_brackets(self):
+
         # Arrange
         html = '''  \n\t\r  <  \n\t\r  a href="#"  \n\t\r  >  \n\t\r
          white < / br > spaces < br / > around brackets  \n\t\r
@@ -15,29 +16,44 @@ class TestHtmlPretty(unittest.TestCase):
         expected = '<a href="#">white</br>spaces<br />around brackets</a>'
 
         # Act
-        tmpl = self.env.from_string(html)
-        result = tmpl.render()
+        tpl = self.env.from_string(html)
+        result = tpl.render()
 
         # Assert
         self._compare_html(expected, result)
 
-    #def test_final_output(self):
-    #    # Arrange
-    #    case = 'something wrong'
-    #    expected = 'wrong something'
-    #    with open('test_case.tpl', 'r') as f:
-    #        case = f.read()
-    #    with open('test_expected.html', 'r') as f:
-    #        expected = f.read()
+    def test_between_attributes(self):
 
-    #    # Act
-    #    tmpl = self.env.from_string(case)
-    #    result = tmpl.render(title='Hello tests')
+        # Arrange
+        html = '''<a  \n\t\r  href="#"  \n\t\r class="t">.</a>'''
+        expected = '<a href="#" class="t">.</a>'
 
-    #    # Assert
-    #    with open('test_result.html', 'w') as file_:
-    #        file_.write(result)
-    #    self._compare_html(expected, result)
+        # Act
+        tpl = self.env.from_string(html)
+        result = tpl.render()
+
+        # Assert
+        self._compare_html(expected, result)
+
+    def test_final_output(self):
+        return
+
+        # Arrange
+        case = 'something wrong'
+        expected = 'wrong something'
+        with open('test_case.tpl', 'r') as f:
+            case = f.read()
+        with open('test_expected.html', 'r') as f:
+            expected = f.read()
+
+        # Act
+        tpl = self.env.from_string(case)
+        result = tpl.render(title='Hello tests')
+
+        # Assert
+        with open('test_result.html', 'w') as file_:
+            file_.write(result)
+        self._compare_html(expected, result)
 
     def _compare_html(self, expected, result):
         if len(expected) <= len(result):

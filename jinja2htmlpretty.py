@@ -122,6 +122,7 @@ class HTMLPretty(Extension):
 
 
                 v = match.group()
+                v = _ws_normalize_re.sub(' ', v)
                 if v.startswith("</"):
                     self.depth -= 1
                     if tag != self.last_tag or self.just_closed:
@@ -131,7 +132,7 @@ class HTMLPretty(Extension):
                     else:
                         self.just_closed = True
 
-                elif v.startswith("<"):
+                elif v.startswith("<") and self.depth > 0:
                     buffer.append(u'\n')
                     [buffer.append(u'  ') for _ in xrange(self.depth)]
 
