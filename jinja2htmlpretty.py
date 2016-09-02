@@ -132,7 +132,7 @@ class HTMLPretty(Extension):
                     else:
                         self.just_closed = True
 
-                elif v.startswith("<") and self.depth > 0:
+                elif v.startswith("<") and pos > 0:
                     buffer.append(u'\n')
                     [buffer.append(u'  ') for _ in xrange(self.depth)]
 

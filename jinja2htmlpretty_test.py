@@ -36,7 +36,6 @@ class TestHtmlPretty(unittest.TestCase):
         self._compare_html(expected, result)
 
     def test_final_output(self):
-        return
 
         # Arrange
         case = 'something wrong'
