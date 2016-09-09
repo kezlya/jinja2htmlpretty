@@ -35,6 +35,18 @@ class TestHtmlPretty(unittest.TestCase):
         # Assert
         self._compare_html(expected, result)
 
+    def test_around_equal(self):
+        # Arrange
+        html = '''<a href  \n\t\r  = \n\t\r "#"> blah  \n\t\r =  \n\t\rblah .</a>'''
+        expected = '<a href="#" class="t">.</a>'
+
+        # Act
+        tpl = self.env.from_string(html)
+        result = tpl.render()
+
+        # Assert
+        self._compare_html(expected, result)
+
     def test_final_output(self):
 
         # Arrange
