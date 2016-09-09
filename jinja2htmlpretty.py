@@ -18,6 +18,7 @@ from jinja2 import TemplateSyntaxError
 _tag_re = re.compile(r'(?:<(/?)([a-zA-Z0-9_-]+)\s*|(\s*>\s*))(?s)')
 _ws_normalize_re = re.compile(r'[ \t\r\n]+')
 
+_ws_around_equal_re = re.compile(r'[ \t\r\n]*=[ \t\r\n]*')
 _ws_open_bracket_re = re.compile(r'[ \t\r\n]*<[ \t\r\n]*')
 _ws_open_bracket_slash_re = re.compile(r'[ \t\r\n]*<[ \t\r\n]*/[ \t\r\n]*')
 _ws_close_bracket_re = re.compile(r'[ \t\r\n]*>[ \t\r\n]*')
@@ -109,6 +110,7 @@ class HTMLPretty(Extension):
                 value = _ws_open_bracket_slash_re.sub('</', value)
                 value = _ws_close_bracket_re.sub('>', value)
                 value = _ws_close_bracket_slash_re.sub('/>', value)
+                value = _ws_around_equal_re.sub('=', value)
                 value = _ws_normalize_re.sub(' ', value)
             buffer.append(value)
 
