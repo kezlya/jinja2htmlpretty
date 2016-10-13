@@ -52,9 +52,9 @@ class TestHtmlPretty(unittest.TestCase):
         # Arrange
         case = 'something wrong'
         expected = 'wrong something'
-        with open('test_case.tpl', 'r') as f:
+        with open('tests/test_case.tpl', 'r') as f:
             case = f.read()
-        with open('test_expected.html', 'r') as f:
+        with open('tests/test_expected.html', 'r') as f:
             expected = f.read()
 
         # Act
