@@ -47,14 +47,26 @@ class TestHtmlPretty(unittest.TestCase):
         # Assert
         self._compare_html(expected, result)
 
+    def test_ul_li(self):
+        # Arrange
+        html = '''  \n\t\r  <ul>  \n\t\r  <li>  \n\t\r  <img src="blah">  \n\t\r  </li>  \n\t\r  </ul>  \n\t\r  '''
+        expected = '<ul>\n  <li><img src="test"></li>\n</ul>'
+
+        # Act
+        tpl = self.env.from_string(html)
+        result = tpl.render()
+
+        # Assert
+        self._compare_html(expected, result)
+
     def test_final_output(self):
 
         # Arrange
         case = 'something wrong'
         expected = 'wrong something'
-        with open('tests/test_case.tpl', 'r') as f:
+        with open('test_case.tpl', 'r') as f:
             case = f.read()
-        with open('tests/test_expected.html', 'r') as f:
+        with open('test_expected.html', 'r') as f:
             expected = f.read()
 
         # Act
