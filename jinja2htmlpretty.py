@@ -15,7 +15,7 @@ from jinja2.lexer import Token, describe_token
 from jinja2 import TemplateSyntaxError
 
 
-_tag_re = re.compile(r'(?:<(/?)([a-zA-Z0-9_-]+)\s*|(\s*>\s*))(?s)')
+_tag_re = re.compile(r'(?:<\s*(/?)\s*([a-zA-Z0-9_-]+)\s*|(\s*>\s*))(?s)')
 _ws_normalize_re = re.compile(r'[ \t\r\n]+')
 
 _ws_around_equal_re = re.compile(r'[ \t\r\n]*=[ \t\r\n]*')
@@ -104,40 +104,48 @@ class HTMLPretty(Extension):
     def normalize(self, ctx):
         pos = 0
         buffer = []
-        def write_data(value):
+
+        def shift():
+            buffer.append(u'\n')
+            [buffer.append(u'  ') for _ in xrange(self.depth)]
+
+        def write_sole(preamble, sole):
+            p = _ws_around_equal_re.sub('=', preamble)
+            p = _ws_normalize_re.sub(' ', p)
+            buffer.append(p)
+            s = _ws_close_bracket_re.sub('>', sole)
+            #s = _ws_close_bracket_slash_re.sub('/>', s)
+            buffer.append(s)
+
+        def write_data(value, type):
             if not self.is_isolated(ctx.stack):
                 value = _ws_open_bracket_re.sub('<', value)
                 value = _ws_open_bracket_slash_re.sub('</', value)
-                value = _ws_close_bracket_re.sub('>', value)
-                value = _ws_close_bracket_slash_re.sub('/>', value)
-                value = _ws_around_equal_re.sub('=', value)
                 value = _ws_normalize_re.sub(' ', value)
-            buffer.append(value)
+
+            if value != '':
+                buffer.append(value)
 
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()
             preamble = ctx.token.value[pos:match.start()]
-            write_data(preamble)
             if sole:
-                write_data(sole)
-            else:
+                write_sole(preamble, sole)
+                return
 
 
-                v = match.group()
-                v = _ws_normalize_re.sub(' ', v)
-                if v.startswith("</"):
-                    self.depth -= 1
-                    if tag != self.last_tag or self.just_closed:
+            write_data(preamble, 'preamble')
+            v = match.group()
+            v = _ws_normalize_re.sub(' ', v)
+            if v.startswith("</"):
+                self.depth -= 1
+                if tag != self.last_tag or self.just_closed:
+                    shift()
+                else:
+                    self.just_closed = True
 
-                        buffer.append(u'\n')
-                        [buffer.append(u'  ') for _ in xrange(self.depth)]
-                    else:
-                        self.just_closed = True
-
-                elif v.startswith("<") and pos > 0:
-                    buffer.append(u'\n')
-                    [buffer.append(u'  ') for _ in xrange(self.depth)]
-
+            elif v.startswith("<") and pos > 0:
+                shift()
 
 
 
@@ -145,7 +153,7 @@ class HTMLPretty(Extension):
                 (closes and self.leave_tag or self.enter_tag)(tag, ctx)
             pos = match.end()
 
-        write_data(ctx.token.value[pos:])
+        write_data(ctx.token.value[pos:], 'end')
         return u''.join(buffer)
 
     def filter_stream(self, stream):

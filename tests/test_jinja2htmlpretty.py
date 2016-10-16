@@ -11,7 +11,8 @@ class TestHtmlPretty(unittest.TestCase):
 
         # Arrange
         html = '''  \n\t\r  <  \n\t\r  a href="#"  \n\t\r  >  \n\t\r
-         white < / br > spaces < br / > around brackets  \n\t\r
+         white \n\t\r < \n\t\r / \n\t\r br \n\t\r>
+         spaces \n\t\r < \n\t\r br  \n\t\r /  \n\t\r > around brackets  \n\t\r
          <  \n\t\r  /  \n\t\r  a  \n\t\r  >  \n\t\r  '''
         expected = '<a href="#">white</br>spaces<br />around brackets</a>'
 
@@ -49,7 +50,10 @@ class TestHtmlPretty(unittest.TestCase):
 
     def test_ul_li(self):
         # Arrange
-        html = '''  \n\t\r  <ul>  \n\t\r  <li>  \n\t\r  <img src="blah">  \n\t\r  </li>  \n\t\r  </ul>  \n\t\r  '''
+        html = '''  \n\t\r  < \n\t\r ul \n\t\r >  \n\t\r
+         < \n\t\r li \n\t\r >  \n\t\r  <img src="blah">  \n\t\r
+         < \n\t\r / \n\t\r li \n\t\r >  \n\t\r
+         < \n\t\r / \n\t\r ul \n\t\r >  \n\t\r  '''
         expected = '<ul>\n  <li><img src="test"></li>\n</ul>'
 
         # Act
