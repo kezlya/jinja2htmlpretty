@@ -122,7 +122,7 @@ class HTMLPretty(Extension):
             v = v.strip()
             v = _ws_open_bracket_re.sub('<', v)
             v = _ws_open_bracket_slash_re.sub('</', v)
-            if v.startswith("</") and tag not in self.void_elements:
+            if v.startswith("</"):
                 self.depth -= 1
                 if tag != self.last_tag or self.just_closed:
                     shift()
@@ -138,12 +138,11 @@ class HTMLPretty(Extension):
             s = _ws_close_bracket_re.sub('>', s)
             buffer.append(s)
 
+        #TODO: need to test this
         def write_data(value):
-            if value != '':
-                raise ValueError('Check this value: ' + value)
-            #if not self.is_isolated(ctx.stack):
-            #if value != '':
-            #    buffer.append(value)
+            if not self.is_isolated(ctx.stack):
+                if value.strip() != '':
+                    buffer.append(value)
 
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()

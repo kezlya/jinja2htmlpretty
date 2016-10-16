@@ -11,14 +11,27 @@ class TestHtmlPretty(unittest.TestCase):
         self.env = Environment(loader=FileSystemLoader(THIS_DIR),
                                extensions=[HTMLPretty])
 
+    def test_text_between_tags(self):
+
+        # Arrange
+        html = '''<html><div><p> \n\t\r white \n\t\r space \n\t\r</p></div>
+         <div><p> \n\t\r around  \n\t\r brackets \n\t\r </p></div></html>\n\t\r'''
+        expected = '<html>\n  <div>\n    <p>white space</p>\n  </div>\n  ' \
+                   '<div>\n    <p>around brackets</p>\n  </div>\n</html>'
+
+        # Act
+        tpl = self.env.from_string(html)
+        result = tpl.render()
+
+        # Assert
+        self._compare_html(expected, result)
+
     def test_around_brackets(self):
 
         # Arrange
         html = '''  \n\t\r  <  \n\t\r  a href="#"  \n\t\r  >  \n\t\r
-         white \n\t\r < \n\t\r / \n\t\r br \n\t\r>
-         spaces \n\t\r < \n\t\r br  \n\t\r /  \n\t\r > around brackets  \n\t\r
-         <  \n\t\r  /  \n\t\r  a  \n\t\r  >  \n\t\r  '''
-        expected = '<a href="#">white</br>spaces<br />around brackets</a>'
+         blah  <  \n\t\r  /  \n\t\r  a  \n\t\r  >  \n\t\r  '''
+        expected = '<a href="#">blah</a>'
 
         # Act
         tpl = self.env.from_string(html)
@@ -30,8 +43,8 @@ class TestHtmlPretty(unittest.TestCase):
     def test_between_attributes(self):
 
         # Arrange
-        html = '''<a  \n\t\r  href="#"  \n\t\r class="t">.</a>'''
-        expected = '<a href="#" class="t">.</a>'
+        html = '''<a  \n\t\r  href="#"  \n\t\r class="t">blah</a>'''
+        expected = '<a href="#" class="t">blah</a>'
 
         # Act
         tpl = self.env.from_string(html)
@@ -41,6 +54,7 @@ class TestHtmlPretty(unittest.TestCase):
         self._compare_html(expected, result)
 
     def test_around_equal(self):
+
         # Arrange
         html = '''<a href  \n\t\r  = \n\t\r "#"> blah  \n\t\r =  \n\t\rblah</a>'''
         expected = '<a href="#">blah=blah</a>'
@@ -53,11 +67,25 @@ class TestHtmlPretty(unittest.TestCase):
         self._compare_html(expected, result)
 
     def test_ul_li(self):
+
         # Arrange
         html = '''  \n\t\r  < \n\t\r ul \n\t\r >  \n\t\r
          < \n\t\r li \n\t\r >  \n\t\r  <img src="blah">  \n\t\r
          < \n\t\r / \n\t\r li \n\t\r >  \n\t\r
          < \n\t\r / \n\t\r ul \n\t\r >  \n\t\r  '''
+        expected = '<ul>\n  <li><img src="blah"></li>\n</ul>'
+
+        # Act
+        tpl = self.env.from_string(html)
+        result = tpl.render()
+
+        # Assert
+        self._compare_html(expected, result)
+
+    def test_solo_tag(self):
+        # Arrange
+        html = ''' <html> <meta link=""/>  <meta link=""> < \n\t\r / \n\t\r br \n\t\r>
+         spaces \n\t\r < \n\t\r br  \n\t\r /  \n\t\r > </html>  '''
         expected = '<ul>\n  <li><img src="blah"></li>\n</ul>'
 
         # Act
