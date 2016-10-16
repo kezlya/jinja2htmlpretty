@@ -1,11 +1,15 @@
 import unittest
-from jinja2 import Environment
+import os
+from jinja2 import Environment, FileSystemLoader
 from jinja2htmlpretty import HTMLPretty
 
 
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class TestHtmlPretty(unittest.TestCase):
     def setUp(self):
-        self.env = Environment(extensions=[HTMLPretty])
+        self.env = Environment(loader=FileSystemLoader(THIS_DIR),
+                               extensions=[HTMLPretty])
 
     def test_around_brackets(self):
 
@@ -64,18 +68,13 @@ class TestHtmlPretty(unittest.TestCase):
         self._compare_html(expected, result)
 
     def test_final_output(self):
-
         # Arrange
-        case = 'something wrong'
-        expected = 'wrong something'
-        with open('test_case.tpl', 'r') as f:
-            case = f.read()
+        tpl = self.env.get_template('test_case.tpl')
         with open('test_expected.html', 'r') as f:
             expected = f.read()
 
         # Act
-        tpl = self.env.from_string(case)
-        result = tpl.render(title='Hello tests')
+        result = tpl.render()
 
         # Assert
         with open('test_result.html', 'w') as file_:

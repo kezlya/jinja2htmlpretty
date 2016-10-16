@@ -22,7 +22,6 @@ _ws_around_equal_re = re.compile(r'[ \t\r\n]*=[ \t\r\n]*')
 _ws_open_bracket_re = re.compile(r'[ \t\r\n]*<[ \t\r\n]*')
 _ws_open_bracket_slash_re = re.compile(r'[ \t\r\n]*<[ \t\r\n]*/[ \t\r\n]*')
 _ws_close_bracket_re = re.compile(r'[ \t\r\n]*>[ \t\r\n]*')
-_ws_close_bracket_slash_re = re.compile(r'[ \t\r\n]*/[ \t\r\n]*>[ \t\r\n]*')
 
 
 class StreamProcessContext(object):
@@ -109,20 +108,18 @@ class HTMLPretty(Extension):
             buffer.append(u'\n')
             [buffer.append(u'  ') for _ in xrange(self.depth)]
 
-        def write_sole(preamble, sole):
-            p = _ws_around_equal_re.sub('=', preamble)
+        def write_sole(p, s):
+            p = _ws_around_equal_re.sub('=', p)
             p = _ws_normalize_re.sub(' ', p)
             buffer.append(p)
-            s = _ws_close_bracket_re.sub('>', sole)
-            #s = _ws_close_bracket_slash_re.sub('/>', s)
+            s = _ws_close_bracket_re.sub('>', s)
             buffer.append(s)
 
-        def write_data(value, type):
+        def write_data(value):
             if not self.is_isolated(ctx.stack):
                 value = _ws_open_bracket_re.sub('<', value)
                 value = _ws_open_bracket_slash_re.sub('</', value)
                 value = _ws_normalize_re.sub(' ', value)
-
             if value != '':
                 buffer.append(value)
 
@@ -133,8 +130,7 @@ class HTMLPretty(Extension):
                 write_sole(preamble, sole)
                 return
 
-
-            write_data(preamble, 'preamble')
+            write_data(preamble)
             v = match.group()
             v = _ws_normalize_re.sub(' ', v)
             if v.startswith("</"):
@@ -153,7 +149,7 @@ class HTMLPretty(Extension):
                 (closes and self.leave_tag or self.enter_tag)(tag, ctx)
             pos = match.end()
 
-        write_data(ctx.token.value[pos:], 'end')
+        write_data(ctx.token.value[pos:])
         return u''.join(buffer)
 
     def filter_stream(self, stream):

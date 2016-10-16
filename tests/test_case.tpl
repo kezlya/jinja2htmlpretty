@@ -7,7 +7,7 @@
   itemtype ="https://schema.org/WebSite  "   >
 
   <head>
-           <title>{{ title }}</title>
+           <title>Helo Test</title>
   <script>
     window.tracker = new gweb.analytics.AutoTrack({
       profile: 'profile',
