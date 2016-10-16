@@ -58,7 +58,7 @@ class TestHtmlPretty(unittest.TestCase):
          < \n\t\r li \n\t\r >  \n\t\r  <img src="blah">  \n\t\r
          < \n\t\r / \n\t\r li \n\t\r >  \n\t\r
          < \n\t\r / \n\t\r ul \n\t\r >  \n\t\r  '''
-        expected = '<ul>\n  <li><img src="test"></li>\n</ul>'
+        expected = '<ul>\n  <li><img src="blah"></li>\n</ul>'
 
         # Act
         tpl = self.env.from_string(html)
@@ -96,6 +96,7 @@ class TestHtmlPretty(unittest.TestCase):
                     expected,
                     result)
                 break
+        self.assertFalse(result.strip() == '', "Result can't be empty")
         self.assertEqual('', msg, msg)
 
 

@@ -15,7 +15,7 @@ from jinja2.lexer import Token, describe_token
 from jinja2 import TemplateSyntaxError
 
 
-_tag_re = re.compile(r'(?:<\s*(/?)\s*([a-zA-Z0-9_-]+)\s*|(\s*>\s*))(?s)')
+_tag_re = re.compile(r'(?:<\s*(/?)\s*([a-zA-Z0-9_-]+)\s*|(>\s*))(?s)')
 _ws_normalize_re = re.compile(r'[ \t\r\n]+')
 
 _ws_around_equal_re = re.compile(r'[ \t\r\n]*=[ \t\r\n]*')
@@ -108,47 +108,52 @@ class HTMLPretty(Extension):
             buffer.append(u'\n')
             [buffer.append(u'  ') for _ in xrange(self.depth)]
 
-        def write_sole(p, s):
+        def write_preamble(p, tag):
+            p = p.strip()
             p = _ws_around_equal_re.sub('=', p)
             p = _ws_normalize_re.sub(' ', p)
+
+            if p !='' and p != ' ':
+                if tag is None:
+                    buffer.append(' ')
             buffer.append(p)
-            s = _ws_close_bracket_re.sub('>', s)
-            buffer.append(s)
 
-        def write_data(value):
-            if not self.is_isolated(ctx.stack):
-                value = _ws_open_bracket_re.sub('<', value)
-                value = _ws_open_bracket_slash_re.sub('</', value)
-                value = _ws_normalize_re.sub(' ', value)
-            if value != '':
-                buffer.append(value)
-
-        for match in _tag_re.finditer(ctx.token.value):
-            closes, tag, sole = match.groups()
-            preamble = ctx.token.value[pos:match.start()]
-            if sole:
-                write_sole(preamble, sole)
-                return
-
-            write_data(preamble)
-            v = match.group()
-            v = _ws_normalize_re.sub(' ', v)
-            if v.startswith("</"):
+        def write_tag(v, tag, closes):
+            v = v.strip()
+            v = _ws_open_bracket_re.sub('<', v)
+            v = _ws_open_bracket_slash_re.sub('</', v)
+            if v.startswith("</") and tag not in self.void_elements:
                 self.depth -= 1
                 if tag != self.last_tag or self.just_closed:
                     shift()
                 else:
                     self.just_closed = True
-
-            elif v.startswith("<") and pos > 0:
+            elif v.startswith("<") and pos > 0 and tag not in self.void_elements:
                 shift()
 
+            buffer.append(v)
+            (closes and self.leave_tag or self.enter_tag)(tag, ctx)
 
+        def write_sole(s):
+            s = _ws_close_bracket_re.sub('>', s)
+            buffer.append(s)
 
-                buffer.append(v)
-                (closes and self.leave_tag or self.enter_tag)(tag, ctx)
+        def write_data(value):
+            if value != '':
+                raise ValueError('Check this value: ' + value)
+            #if not self.is_isolated(ctx.stack):
+            #if value != '':
+            #    buffer.append(value)
+
+        for match in _tag_re.finditer(ctx.token.value):
+            closes, tag, sole = match.groups()
+            preamble = ctx.token.value[pos:match.start()]
+            write_preamble(preamble, tag)
+            if sole:
+                write_sole(sole)
+            else:
+                write_tag(match.group(), tag, closes)
             pos = match.end()
-
         write_data(ctx.token.value[pos:])
         return u''.join(buffer)
 
