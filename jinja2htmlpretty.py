@@ -121,7 +121,7 @@ class HTMLPretty(Extension):
                 if p != '' and p != ' ':
                     if tag is None:
                         buffer.append(' ')
-                buffer.append(p)
+            buffer.append(p)
 
         def write_tag(v, tag, closes):
             if not self.is_isolated(ctx.stack):
@@ -138,21 +138,21 @@ class HTMLPretty(Extension):
                             self.just_closed = True
                     elif v.startswith("<") and pos > 0:
                         shift()
+            else:
+                if v.startswith("</"):
+                    self.depth -= 1
 
-                buffer.append(v)
-                (closes and self.leave_tag or self.enter_tag)(tag, ctx)
+            buffer.append(v)
+            (closes and self.leave_tag or self.enter_tag)(tag, ctx)
 
         def write_sole(s):
             if not self.is_isolated(ctx.stack):
                 s = _ws_close_bracket_re.sub('>', s)
-                buffer.append(s)
+            buffer.append(s)
 
         #TODO: need to test this
         def write_data(value):
-            if not self.is_isolated(ctx.stack):
-                v = value.strip()
-                if v != '':
-                    buffer.append(v)
+            buffer.append(''+value)
 
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()
@@ -163,7 +163,7 @@ class HTMLPretty(Extension):
             else:
                 write_tag(match.group(), tag, closes)
             pos = match.end()
-        write_data(ctx.token.value[pos:])
+        write_preamble(ctx.token.value[pos:], None)
         return u''.join(buffer)
 
     def filter_stream(self, stream):

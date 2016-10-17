@@ -44,8 +44,8 @@ class TestHtmlPretty(unittest.TestCase):
     def test_between_attributes(self):
 
         # Arrange
-        html = '''<a  \n\t\r  href="#"  \n\t\r class="t">blah</a>'''
-        expected = '<a href="#" class="t">blah</a>'.format(HTMLPretty.SHIFT)
+        html = '''<a  \n\t\r  href="#"  \n\t\r class="t"><img \n\t\r src="#"\n\t\r ></a>'''
+        expected = '<a href="#" class="t">\n{0}<img src="#">\n</a>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -116,9 +116,10 @@ class TestHtmlPretty(unittest.TestCase):
         self._compare_html(expected, result)
 
     def test_script_tag(self):
+
         # Arrange
-        html = '''<html><script> \n\t\r  alert("blah"); \n\t\r </script></html>'''
-        expected = '<html>\n{0}<script> \n\t\r  alert("blah"); \n\t\r </script>\n</html>'.format(HTMLPretty.SHIFT)
+        html = '''<html><script> \n     alert("blah"); \n  </script></html>'''
+        expected = '<html>\n{0}<script> \n     alert("blah"); \n  </script>\n</html>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -126,6 +127,7 @@ class TestHtmlPretty(unittest.TestCase):
 
         # Assert
         self._compare_html(expected, result)
+
 
     def test_final_output(self):
         # Arrange
