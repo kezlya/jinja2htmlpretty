@@ -115,6 +115,18 @@ class TestHtmlPretty(unittest.TestCase):
         # Assert
         self._compare_html(expected, result)
 
+    def test_script_tag(self):
+        # Arrange
+        html = '''<html><script> \n\t\r  alert("blah"); \n\t\r </script></html>'''
+        expected = '<html>\n{0}<script> \n\t\r  alert("blah"); \n\t\r </script>\n</html>'.format(HTMLPretty.SHIFT)
+
+        # Act
+        tpl = self.env.from_string(html)
+        result = tpl.render()
+
+        # Assert
+        self._compare_html(expected, result)
+
     def test_final_output(self):
         # Arrange
         tpl = self.env.get_template('test_case.tpl')

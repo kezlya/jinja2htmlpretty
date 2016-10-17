@@ -113,36 +113,39 @@ class HTMLPretty(Extension):
             [buffer.append(self.SHIFT) for _ in xrange(self.depth)]
 
         def write_preamble(p, tag):
-            p = p.strip()
-            p = _ws_around_equal_re.sub('=', p)
-            p = _ws_normalize_re.sub(' ', p)
+            if not self.is_isolated(ctx.stack):
+                p = p.strip()
+                p = _ws_around_equal_re.sub('=', p)
+                p = _ws_normalize_re.sub(' ', p)
 
-            if p != '' and p != ' ':
-                if tag is None:
-                    buffer.append(' ')
-            buffer.append(p)
+                if p != '' and p != ' ':
+                    if tag is None:
+                        buffer.append(' ')
+                buffer.append(p)
 
         def write_tag(v, tag, closes):
-            v = v.strip()
-            v = _ws_open_bracket_re.sub('<', v)
-            v = _ws_open_bracket_slash_re.sub('</', v)
+            if not self.is_isolated(ctx.stack):
+                v = v.strip()
+                v = _ws_open_bracket_re.sub('<', v)
+                v = _ws_open_bracket_slash_re.sub('</', v)
 
-            if tag != 'br':
-                if v.startswith("</"):
-                    self.depth -= 1
-                    if tag != self.last_tag or self.just_closed:
+                if tag != 'br':
+                    if v.startswith("</"):
+                        self.depth -= 1
+                        if tag != self.last_tag or self.just_closed:
+                            shift()
+                        else:
+                            self.just_closed = True
+                    elif v.startswith("<") and pos > 0:
                         shift()
-                    else:
-                        self.just_closed = True
-                elif v.startswith("<") and pos > 0:
-                    shift()
 
-            buffer.append(v)
-            (closes and self.leave_tag or self.enter_tag)(tag, ctx)
+                buffer.append(v)
+                (closes and self.leave_tag or self.enter_tag)(tag, ctx)
 
         def write_sole(s):
-            s = _ws_close_bracket_re.sub('>', s)
-            buffer.append(s)
+            if not self.is_isolated(ctx.stack):
+                s = _ws_close_bracket_re.sub('>', s)
+                buffer.append(s)
 
         #TODO: need to test this
         def write_data(value):
