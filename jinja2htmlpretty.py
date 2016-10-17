@@ -62,6 +62,7 @@ class HTMLPretty(Extension):
         (['dd', 'dt'], set(['dl', 'dt', 'dd']))
     ])
 
+    SHIFT = u'  '
     last_tag = ''
     depth = 0
     just_closed = False
@@ -81,12 +82,13 @@ class HTMLPretty(Extension):
         while ctx.stack and self.is_breaking(tag, ctx.stack[-1]):
             self.leave_tag(ctx.stack[-1], ctx)
 
-        self.last_tag = tag
-        if tag not in self.void_elements:
-            ctx.stack.append(tag)
+        if tag != 'br':
+            self.last_tag = tag
+            if tag not in self.void_elements:
+                ctx.stack.append(tag)
 
-            self.depth += 1
-            self.just_closed = False
+                self.depth += 1
+                self.just_closed = False
 
     def leave_tag(self, tag, ctx):
         if not ctx.stack:
@@ -108,14 +110,14 @@ class HTMLPretty(Extension):
 
         def shift():
             buffer.append(u'\n')
-            [buffer.append(u'  ') for _ in xrange(self.depth)]
+            [buffer.append(self.SHIFT) for _ in xrange(self.depth)]
 
         def write_preamble(p, tag):
             p = p.strip()
             p = _ws_around_equal_re.sub('=', p)
             p = _ws_normalize_re.sub(' ', p)
 
-            if p !='' and p != ' ':
+            if p != '' and p != ' ':
                 if tag is None:
                     buffer.append(' ')
             buffer.append(p)
@@ -124,14 +126,16 @@ class HTMLPretty(Extension):
             v = v.strip()
             v = _ws_open_bracket_re.sub('<', v)
             v = _ws_open_bracket_slash_re.sub('</', v)
-            if v.startswith("</"):
-                self.depth -= 1
-                if tag != self.last_tag or self.just_closed:
+
+            if tag != 'br':
+                if v.startswith("</"):
+                    self.depth -= 1
+                    if tag != self.last_tag or self.just_closed:
+                        shift()
+                    else:
+                        self.just_closed = True
+                elif v.startswith("<") and pos > 0:
                     shift()
-                else:
-                    self.just_closed = True
-            elif v.startswith("<") and pos > 0:
-                shift()
 
             buffer.append(v)
             (closes and self.leave_tag or self.enter_tag)(tag, ctx)
@@ -143,8 +147,9 @@ class HTMLPretty(Extension):
         #TODO: need to test this
         def write_data(value):
             if not self.is_isolated(ctx.stack):
-                if value.strip() != '':
-                    buffer.append(value)
+                v = value.strip()
+                if v != '':
+                    buffer.append(v)
 
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()

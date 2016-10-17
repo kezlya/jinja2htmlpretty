@@ -6,6 +6,7 @@ from jinja2htmlpretty import HTMLPretty
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
 class TestHtmlPretty(unittest.TestCase):
     def setUp(self):
         self.env = Environment(loader=FileSystemLoader(THIS_DIR),
@@ -16,8 +17,8 @@ class TestHtmlPretty(unittest.TestCase):
         # Arrange
         html = '''<html><div><p> \n\t\r white \n\t\r space \n\t\r</p></div>
          <div><p> \n\t\r around  \n\t\r brackets \n\t\r </p></div></html>\n\t\r'''
-        expected = '<html>\n  <div>\n    <p>white space</p>\n  </div>\n  ' \
-                   '<div>\n    <p>around brackets</p>\n  </div>\n</html>'
+        expected = '<html>\n{0}<div>\n{0}{0}<p>white space</p>\n{0}</div>\n{0}' \
+                   '<div>\n{0}{0}<p>around brackets</p>\n{0}</div>\n</html>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -31,7 +32,7 @@ class TestHtmlPretty(unittest.TestCase):
         # Arrange
         html = '''  \n\t\r  <  \n\t\r  a href="#"  \n\t\r  >  \n\t\r
          blah  <  \n\t\r  /  \n\t\r  a  \n\t\r  >  \n\t\r  '''
-        expected = '<a href="#">blah</a>'
+        expected = '<a href="#">blah</a>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -44,7 +45,7 @@ class TestHtmlPretty(unittest.TestCase):
 
         # Arrange
         html = '''<a  \n\t\r  href="#"  \n\t\r class="t">blah</a>'''
-        expected = '<a href="#" class="t">blah</a>'
+        expected = '<a href="#" class="t">blah</a>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -57,7 +58,7 @@ class TestHtmlPretty(unittest.TestCase):
 
         # Arrange
         html = '''<a href  \n\t\r  = \n\t\r "#"> blah  \n\t\r =  \n\t\rblah</a>'''
-        expected = '<a href="#">blah=blah</a>'
+        expected = '<a href="#">blah=blah</a>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -73,7 +74,7 @@ class TestHtmlPretty(unittest.TestCase):
          < \n\t\r li \n\t\r >  \n\t\r  <img src="blah">  \n\t\r
          < \n\t\r / \n\t\r li \n\t\r >  \n\t\r
          < \n\t\r / \n\t\r ul \n\t\r >  \n\t\r  '''
-        expected = '<ul>\n  <li>\n    <img src="blah">\n  </li>\n</ul>'
+        expected = '<ul>\n{0}<li>\n{0}{0}<img src="blah">\n{0}</li>\n</ul>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -86,8 +87,9 @@ class TestHtmlPretty(unittest.TestCase):
 
         # Arrange
         html = ''' <html>  \n\t\r<meta link=""/>  \n\t\r <meta link=""> \n\t\r
-         \n\t\r < \n\t\r br  \n\t\r /  \n\t\r >  \n\t\r </html>  '''
-        expected = '<html>\n  <meta link=""/>\n  <meta link="">\n  <br />\n</html>'
+         \n\t\r < img src="#"/ >  \n\t\r </html>  '''
+        expected = '<html>\n{0}<meta link=""/>\n{0}<meta link="">\n{0}' \
+                   '<img src="#"/>\n</html>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -102,9 +104,9 @@ class TestHtmlPretty(unittest.TestCase):
         html = '''<html><div><p>1\n\t\r  <\n\t\r /\n\t\r br\n\t\r > \n\t\r one</p></div>
          <div><p>2  \n\t\r <\n\t\r br\n\t\r > \n\t\r  two</p></div>
          <div><p>3  \n\t\r < \n\t\r br \n\t\r / \n\t\r > \n\t\r  three</p></div></html>'''
-        expected = '<html>\n  <div>\n    <p>1</br>one</div>\n  ' \
-                   '<div>\n    <p>2<br>two</p>\n  </div>\n  ' \
-                   '<div>\n    <p>3<br/>three</p>\n  </div>\n</html>'
+        expected = '<html>\n{0}<div>\n{0}{0}<p>1</br>one</p>\n{0}</div>\n{0}' \
+                   '<div>\n{0}{0}<p>2<br>two</p>\n{0}</div>\n{0}' \
+                   '<div>\n{0}{0}<p>3<br />three</p>\n{0}</div>\n</html>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
