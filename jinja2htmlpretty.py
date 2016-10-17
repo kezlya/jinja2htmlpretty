@@ -80,9 +80,11 @@ class HTMLPretty(Extension):
     def enter_tag(self, tag, ctx):
         while ctx.stack and self.is_breaking(tag, ctx.stack[-1]):
             self.leave_tag(ctx.stack[-1], ctx)
+
+        self.last_tag = tag
         if tag not in self.void_elements:
             ctx.stack.append(tag)
-            self.last_tag = tag
+
             self.depth += 1
             self.just_closed = False
 

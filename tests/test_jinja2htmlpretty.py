@@ -73,7 +73,7 @@ class TestHtmlPretty(unittest.TestCase):
          < \n\t\r li \n\t\r >  \n\t\r  <img src="blah">  \n\t\r
          < \n\t\r / \n\t\r li \n\t\r >  \n\t\r
          < \n\t\r / \n\t\r ul \n\t\r >  \n\t\r  '''
-        expected = '<ul>\n  <li><img src="blah"></li>\n</ul>'
+        expected = '<ul>\n  <li>\n    <img src="blah">\n  </li>\n</ul>'
 
         # Act
         tpl = self.env.from_string(html)
