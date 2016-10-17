@@ -128,7 +128,7 @@ class HTMLPretty(Extension):
                     shift()
                 else:
                     self.just_closed = True
-            elif v.startswith("<") and pos > 0 and tag not in self.void_elements:
+            elif v.startswith("<") and pos > 0:
                 shift()
 
             buffer.append(v)
