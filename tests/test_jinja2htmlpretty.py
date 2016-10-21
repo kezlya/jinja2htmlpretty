@@ -136,7 +136,7 @@ class TestHtmlPretty(unittest.TestCase):
             expected = f.read()
 
         # Act
-        result = tpl.render()
+        result = tpl.render().encode('utf8')
 
         # Assert
         with open('test_result.html', 'w') as file_:
