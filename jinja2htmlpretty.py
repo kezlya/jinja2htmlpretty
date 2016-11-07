@@ -18,7 +18,8 @@ from jinja2 import TemplateSyntaxError
 _tag_re = re.compile(r'(?:<\s*(/?)\s*([a-zA-Z0-9_-]+)\s*|(>\s*))(?s)')
 _ws_normalize_re = re.compile(r'[ \t\r\n]+')
 
-_ws_around_equal_re = re.compile(r'[ \t\r\n]*=[ \t\r\n]*')
+_ws_around_equal_re = re.compile(r'[ \t\r\n]*=[ \t\r\n]*"[ \t\r\n]*')
+_ws_around_dquotes_re = re.compile(r'[ \t\r\n]+"')
 _ws_open_bracket_re = re.compile(r'[ \t\r\n]*<[ \t\r\n]*')
 _ws_open_bracket_slash_re = re.compile(r'[ \t\r\n]*<[ \t\r\n]*/[ \t\r\n]*')
 _ws_close_bracket_re = re.compile(r'[ \t\r\n]*>[ \t\r\n]*')
@@ -115,12 +116,13 @@ class HTMLPretty(Extension):
         def write_preamble(p, tag):
             if not self.is_isolated(ctx.stack):
                 p = p.strip()
-                p = _ws_around_equal_re.sub('=', p)
+                if tag is None:
+                    p = _ws_around_equal_re.sub('="', p)
+                    p = _ws_around_dquotes_re.sub('"', p)
                 p = _ws_normalize_re.sub(' ', p)
 
-                if p != '' and p != ' ':
-                    if tag is None:
-                        buffer.append(' ')
+                if p != '' and p != ' ' and tag is None and pos >0:
+                    buffer.append(' ')
             buffer.append(p)
 
         def write_tag(v, tag, closes):

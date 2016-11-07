@@ -41,6 +41,20 @@ class TestHtmlPretty(unittest.TestCase):
         # Assert
         self._compare_html(expected, result)
 
+    def test_around_double_quotes(self):
+
+        # Arrange
+        html = '''<a href=  \n\t\r "  \n\t\r #  \n\t\r "  \n\t\r  >  \n\t\r
+         "  \n\t\r blah   \n\t\r "  \n\t\r   </a>'''
+        expected = '<a href="#">" blah "</a>'.format(HTMLPretty.SHIFT)
+
+        # Act
+        tpl = self.env.from_string(html)
+        result = tpl.render()
+
+        # Assert
+        self._compare_html(expected, result)
+
     def test_between_attributes(self):
 
         # Arrange
@@ -58,7 +72,7 @@ class TestHtmlPretty(unittest.TestCase):
 
         # Arrange
         html = '''<a href  \n\t\r  = \n\t\r "#"> blah  \n\t\r =  \n\t\rblah</a>'''
-        expected = '<a href="#">blah=blah</a>'.format(HTMLPretty.SHIFT)
+        expected = '<a href="#">blah = blah</a>'.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
@@ -148,13 +162,17 @@ class TestHtmlPretty(unittest.TestCase):
             length = len(expected)
         else:
             length = len(result)
+        line_counter = 0
         msg = ''
         for i in xrange(length):
+            if expected[i] == '\n':
+                line_counter += 1
+
             if expected[i] != result[i]:
-                msg = "Discrepancy on char {0}:\n" \
+                msg = "Discrepancy on line {0}:\n" \
                       "Expected:\n{1}\n" \
                       "Result:\n{2}".format(
-                    i,
+                    line_counter,
                     expected,
                     result)
                 break
