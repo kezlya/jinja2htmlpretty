@@ -46,7 +46,7 @@ def _make_dict_from_listing(listing):
 
 
 class HTMLPretty(Extension):
-    isolated_elements = set(['script', 'style', 'noscript', 'textarea'])
+    isolated_elements = set(['script', 'style', 'noscript', 'textarea', 'pre'])
     void_elements = set(['br', 'img', 'area', 'hr', 'param', 'input',
                          'embed', 'col', 'meta', 'link', 'path'])
     block_elements = set(['div', 'p', 'form', 'ul', 'ol', 'li', 'table', 'tr',

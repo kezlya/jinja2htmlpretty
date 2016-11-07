@@ -162,7 +162,7 @@ class TestHtmlPretty(unittest.TestCase):
             length = len(expected)
         else:
             length = len(result)
-        line_counter = 0
+        line_counter = 1
         msg = ''
         for i in xrange(length):
             if expected[i] == '\n':
