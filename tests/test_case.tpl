@@ -2696,11 +2696,7 @@
    >  
                 
    
-   <  textarea id=   "   textarea   "    rows=   "   8   "    cols=   "   48   "    placeholder=   "   Enter your message here   "   
-   >  
-   
-   <  /textarea
-   >  
+   <textarea id="textarea" rows="8" cols="48" placeholder="Enter your message here"></textarea>
               
    
    <  /p
