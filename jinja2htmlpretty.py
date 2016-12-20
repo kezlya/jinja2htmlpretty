@@ -113,7 +113,7 @@ class HTMLPretty(Extension):
             buffer.append(u'\n')
             [buffer.append(self.SHIFT) for _ in xrange(self.depth)]
 
-        def write_preamble(p, tag):
+        def write_preamble(p, tag, closes):
             if not self.is_isolated(ctx.stack):
                 p = p.strip()
                 if tag is None:
@@ -123,6 +123,8 @@ class HTMLPretty(Extension):
 
                 if p != '' and p != ' ' and tag is None and pos >0:
                     buffer.append(' ')
+            elif closes is None and p != '' and p != ' ':
+                buffer.append(' ')
             buffer.append(p)
 
         def write_tag(v, tag, closes):
@@ -159,13 +161,13 @@ class HTMLPretty(Extension):
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()
             preamble = ctx.token.value[pos:match.start()]
-            write_preamble(preamble, tag)
+            write_preamble(preamble, tag, closes)
             if sole:
                 write_sole(sole)
             else:
                 write_tag(match.group(), tag, closes)
             pos = match.end()
-        write_preamble(ctx.token.value[pos:], None)
+        write_preamble(ctx.token.value[pos:], None, None)
         return u''.join(buffer)
 
     def filter_stream(self, stream):

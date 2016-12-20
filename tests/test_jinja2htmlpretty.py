@@ -145,9 +145,8 @@ class TestHtmlPretty(unittest.TestCase):
     def test_textarea_tag(self):
 
         # Arrange
-        html = '''<html><textarea id="t" rows="1" cols="1">
-                </textarea></html>'''
-        expected = '''<html>\n{0}<textarea id="t" rows="1" cols="1"></textarea>\n</html>'''.format(HTMLPretty.SHIFT)
+        html = '''<html><textarea id="t" rows="1" cols="1"> \n  t \n  </textarea></html>'''
+        expected = '''<html>\n{0}<textarea id="t" rows="1" cols="1"> \n  t \n  </textarea>\n</html>'''.format(HTMLPretty.SHIFT)
 
         # Act
         tpl = self.env.from_string(html)
