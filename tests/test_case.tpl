@@ -2915,42 +2915,6 @@
    >  
                 
    
-   <  input type=   "   submit   "    value=   "   
-   
-   <  input type=submit
-   >     "   
-   >  
-                
-   
-   <  input type=   "   button   "    value=   "   
-   
-   <  input type=button
-   >     "   
-   >  
-                
-   
-   <  input type=   "   reset   "    value=   "   
-   
-   <  input type=reset
-   >     "   
-   >  
-                
-   
-   <  input type=   "   submit   "    value=   "   
-   
-   <  input disabled
-   >     "    disabled
-   >  
-              
-   
-   <  /p
-   >  
-              
-   
-   <  p
-   >  
-                
-   
    <  button type=   "   submit   "   
    >  &lt;button type=submit&gt;
    
