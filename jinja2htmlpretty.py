@@ -125,7 +125,9 @@ class HTMLPretty(Extension):
                     buffer.append(' ')
             elif closes is None and p != '' and p != ' ':
                 buffer.append(' ')
-            buffer.append(p)
+
+            if p != '':
+                buffer.append(p)
 
         def write_tag(v, tag, closes):
             if not self.is_isolated(ctx.stack):
@@ -140,7 +142,7 @@ class HTMLPretty(Extension):
                             shift()
                         else:
                             self.just_closed = True
-                    elif v.startswith("<") and pos > 0:
+                    elif v.startswith("<") and len(buffer) > 0:
                         shift()
             else:
                 if v.startswith("</"):
