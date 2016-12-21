@@ -155,11 +155,31 @@ class TestHtmlPretty(unittest.TestCase):
         # Assert
         self._compare_html(expected, result)
 
-    def test_final_output(self):
+    def test_full_page(self):
         # Arrange
         tpl = self.env.get_template('test_case.tpl')
         with open('test_expected.html', 'r') as f:
             expected = f.read()
+
+        # Act
+        result = tpl.render().encode('utf8')
+
+        # Assert
+        with open('test_result.html', 'w') as file_:
+            file_.write(result)
+        self._compare_html(expected, result)
+
+    def test_template(self):
+        # Arrange
+        tmpl_string = '''
+        <html>
+        {% if 1==1 %}
+        <title>Hello</title>
+        {% endif %}
+        </html>
+        '''
+        tpl = self.env.from_string(tmpl_string)
+        expected = '''<html>\n{0}<title>Hello</title>\n</html>'''.format(HTMLPretty.SHIFT)
 
         # Act
         result = tpl.render().encode('utf8')

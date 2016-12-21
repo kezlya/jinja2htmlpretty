@@ -67,6 +67,7 @@ class HTMLPretty(Extension):
     last_tag = ''
     depth = 0
     just_closed = False
+    start = True
 
     def is_isolated(self, stack):
         for tag in reversed(stack):
@@ -142,8 +143,13 @@ class HTMLPretty(Extension):
                             shift()
                         else:
                             self.just_closed = True
-                    elif v.startswith("<") and len(buffer) > 0:
-                        shift()
+                    elif v.startswith("<"):
+                        if self.start:
+                            self.start = False
+                            if len(buffer) > 0:
+                                shift()
+                        else:
+                            shift()
             else:
                 if v.startswith("</"):
                     self.depth -= 1
