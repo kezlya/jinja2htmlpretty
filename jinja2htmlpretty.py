@@ -164,7 +164,7 @@ class HTMLPretty(Extension):
 
         #TODO: need to test this
         def write_data(value):
-            buffer.append(''+value)
+            buffer.append(value)
 
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()
