@@ -68,9 +68,10 @@ class HTMLPretty(Extension):
     depth = 0
     just_closed = False
     start = True
+    ctx = None
 
-    def is_isolated(self, stack):
-        for tag in reversed(stack):
+    def is_isolated(self):
+        for tag in reversed(self.ctx.stack):
             if tag in self.isolated_elements:
                 return True
         return False
@@ -80,35 +81,36 @@ class HTMLPretty(Extension):
         return breaking and (tag in breaking or
             ('#block' in breaking and tag in self.block_elements))
 
-    def enter_tag(self, tag, ctx):
-        while ctx.stack and self.is_breaking(tag, ctx.stack[-1]):
-            self.leave_tag(ctx.stack[-1], ctx)
+    def enter_tag(self, tag):
+        while self.ctx.stack and self.is_breaking(tag, self.ctx.stack[-1]):
+            self.leave_tag(self.ctx.stack[-1])
 
         if tag != 'br':
             self.last_tag = tag
             if tag not in self.void_elements:
-                ctx.stack.append(tag)
+                self.ctx.stack.append(tag)
 
                 self.depth += 1
                 self.just_closed = False
 
-    def leave_tag(self, tag, ctx):
-        if not ctx.stack:
-            ctx.fail('Tried to leave "%s" but something closed '
+    def leave_tag(self, tag):
+        if not self.ctx.stack:
+            self.ctx.fail('Tried to leave "%s" but something closed '
                      'it already' % tag)
-        if tag == ctx.stack[-1]:
-            ctx.stack.pop()
+        if tag == self.ctx.stack[-1]:
+            self.ctx.stack.pop()
             return
-        for idx, other_tag in enumerate(reversed(ctx.stack)):
+        for idx, other_tag in enumerate(reversed(self.ctx.stack)):
             if other_tag == tag:
                 for num in xrange(idx + 1):
-                    ctx.stack.pop()
+                    self.ctx.stack.pop()
             elif not self.breaking_rules.get(other_tag):
                 break
 
     def normalize(self, ctx):
         pos = 0
         buffer = []
+        self.ctx = ctx
 
         def shift():
             buffer.append(u'\n')
@@ -118,7 +120,7 @@ class HTMLPretty(Extension):
             if p == '' or p.strip() == '':
                 return
 
-            if not self.is_isolated(ctx.stack):
+            if not self.is_isolated():
                 if tag is None:
                     p = _ws_around_equal_re.sub('="', p)
                     p = _ws_around_dquotes_re.sub('"', p)
@@ -128,7 +130,7 @@ class HTMLPretty(Extension):
 
         def write_tag(v, tag, closes):
             should_shift = False
-            if not self.is_isolated(ctx.stack):
+            if not self.is_isolated():
                 v = _ws_normalize_re.sub(' ', v)
                 v = _ws_open_bracket_re.sub('<', v)
                 v = _ws_open_bracket_slash_re.sub('</', v)
@@ -158,10 +160,10 @@ class HTMLPretty(Extension):
                     self.depth -= 1
                 buffer.append(v)
 
-            (closes and self.leave_tag or self.enter_tag)(tag, ctx)
+            (closes and self.leave_tag or self.enter_tag)(tag)
 
         def write_sole(s):
-            if not self.is_isolated(ctx.stack):
+            if not self.is_isolated():
                 s = _ws_close_bracket_re.sub('>', s)
             check_then_write(s)
 
@@ -170,10 +172,6 @@ class HTMLPretty(Extension):
                 buffer[-1] = buffer[-1][:-1] + v
             else:
                 buffer.append(v)
-
-        #TODO: need to test this
-        def write_data(value):
-            buffer.append(value)
 
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()
