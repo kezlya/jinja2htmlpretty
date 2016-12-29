@@ -187,6 +187,22 @@ class TestHtmlPretty(unittest.TestCase):
         # Assert
         self._compare_html(expected, result)
 
+    def test_template_var(self):
+        # Arrange
+        tmpl_string = '''
+        <html>
+        <title>Hello {{val}} World</title>
+        </html>
+        '''
+        tpl = self.env.from_string(tmpl_string)
+        expected = '''<html>\n{0}<title>Hello Best World</title>\n</html>'''.format(HTMLPretty.SHIFT)
+
+        # Act
+        result = tpl.render(val='Best').encode('utf8')
+
+        # Assert
+        self._compare_html(expected, result)
+
     def test_template_sole_attribute(self):
         # Arrange
         tmpl_string = '''
