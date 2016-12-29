@@ -114,30 +114,21 @@ class HTMLPretty(Extension):
             buffer.append(u'\n')
             [buffer.append(self.SHIFT) for _ in xrange(self.depth)]
 
-        def write_preamble(p, tag, closes):
+        def write_preamble(p, tag):
             if p == '' or p.strip() == '':
                 return
 
-            #buffer.append('*')
-
             if not self.is_isolated(ctx.stack):
-                #p = p.strip()
                 if tag is None:
                     p = _ws_around_equal_re.sub('="', p)
                     p = _ws_around_dquotes_re.sub('"', p)
-                    #if pos > 0:
-                        #buffer.append(' ')
                 p = _ws_normalize_re.sub(' ', p)
-            #elif closes is None:
-            #    buffer.append(' ')
 
-            #buffer.append('*')
             buffer.append(p)
 
         def write_tag(v, tag, closes):
             should_shift = False
             if not self.is_isolated(ctx.stack):
-                #v = v.strip()
                 v = _ws_normalize_re.sub(' ', v)
                 v = _ws_open_bracket_re.sub('<', v)
                 v = _ws_open_bracket_slash_re.sub('</', v)
@@ -156,6 +147,7 @@ class HTMLPretty(Extension):
                                 should_shift = True
                         else:
                             should_shift = True
+
                 if should_shift:
                     shift()
                     buffer.append(v)
@@ -181,19 +173,18 @@ class HTMLPretty(Extension):
 
         #TODO: need to test this
         def write_data(value):
-            #buffer.append('*')
             buffer.append(value)
 
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()
             preamble = ctx.token.value[pos:match.start()]
-            write_preamble(preamble, tag, closes)
+            write_preamble(preamble, tag)
             if sole:
                 write_sole(sole)
             else:
                 write_tag(match.group(), tag, closes)
             pos = match.end()
-        write_preamble(ctx.token.value[pos:], None, None)
+        write_preamble(ctx.token.value[pos:], None)
         return u''.join(buffer)
 
     def filter_stream(self, stream):
