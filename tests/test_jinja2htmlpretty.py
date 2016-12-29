@@ -187,19 +187,23 @@ class TestHtmlPretty(unittest.TestCase):
         # Assert
         self._compare_html(expected, result)
 
-    def test_template_block(self):
+    def test_template_sole_attribute(self):
         # Arrange
         tmpl_string = '''
         <html>
         <input type="checkbox"
         {% if 1==1 %}
-           selected
-        {% endif %}
-        />
+            selected
+        {% endif %} />
+        <input type="checkbox"
+        {% if 1==1 %}
+            checked
+        {% endif %} />
         </html>
         '''
         tpl = self.env.from_string(tmpl_string)
-        expected = '''<html>\n{0}<input type="checkbox" selected/>\n</html>'''.format(HTMLPretty.SHIFT)
+        expected = '<html>\n{0}<input type="checkbox" selected/>' \
+                   '\n{0}<input type="checkbox" checked/>\n</html>'.format(HTMLPretty.SHIFT)
 
         # Act
         result = tpl.render().encode('utf8')

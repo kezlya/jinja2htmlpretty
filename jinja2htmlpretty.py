@@ -62,6 +62,7 @@ class HTMLPretty(Extension):
         (['thead', 'tbody', 'tfoot'], set(['thead', 'tbody', 'tfoot'])),
         (['dd', 'dt'], set(['dl', 'dt', 'dd']))
     ])
+    sole_attributes = set(['selected', 'checked'])
 
     SHIFT = u'  '
     last_tag = ''
@@ -128,6 +129,8 @@ class HTMLPretty(Extension):
                 buffer.append(' ')
 
             if p != '':
+                if p in self.sole_attributes:
+                    buffer.append(' ')
                 buffer.append(p)
 
         def write_tag(v, tag, closes):
