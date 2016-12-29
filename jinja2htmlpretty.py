@@ -62,7 +62,6 @@ class HTMLPretty(Extension):
         (['thead', 'tbody', 'tfoot'], set(['thead', 'tbody', 'tfoot'])),
         (['dd', 'dt'], set(['dl', 'dt', 'dd']))
     ])
-    sole_attributes = set(['selected', 'checked'])
 
     SHIFT = u'  '
     last_tag = ''
@@ -116,26 +115,30 @@ class HTMLPretty(Extension):
             [buffer.append(self.SHIFT) for _ in xrange(self.depth)]
 
         def write_preamble(p, tag, closes):
+            if p == '' or p.strip() == '':
+                return
+
+            #buffer.append('*')
+
             if not self.is_isolated(ctx.stack):
-                p = p.strip()
+                #p = p.strip()
                 if tag is None:
                     p = _ws_around_equal_re.sub('="', p)
                     p = _ws_around_dquotes_re.sub('"', p)
+                    #if pos > 0:
+                        #buffer.append(' ')
                 p = _ws_normalize_re.sub(' ', p)
+            #elif closes is None:
+            #    buffer.append(' ')
 
-                if p != '' and p != ' ' and tag is None and pos >0:
-                    buffer.append(' ')
-            elif closes is None and p != '' and p != ' ':
-                buffer.append(' ')
-
-            if p != '':
-                if p in self.sole_attributes:
-                    buffer.append(' ')
-                buffer.append(p)
+            #buffer.append('*')
+            buffer.append(p)
 
         def write_tag(v, tag, closes):
+            should_shift = False
             if not self.is_isolated(ctx.stack):
-                v = v.strip()
+                #v = v.strip()
+                v = _ws_normalize_re.sub(' ', v)
                 v = _ws_open_bracket_re.sub('<', v)
                 v = _ws_open_bracket_slash_re.sub('</', v)
 
@@ -143,30 +146,42 @@ class HTMLPretty(Extension):
                     if v.startswith("</"):
                         self.depth -= 1
                         if tag != self.last_tag or self.just_closed:
-                            shift()
+                            should_shift = True
                         else:
                             self.just_closed = True
                     elif v.startswith("<"):
                         if self.start:
                             self.start = False
                             if len(buffer) > 0:
-                                shift()
+                                should_shift = True
                         else:
-                            shift()
+                            should_shift = True
+                if should_shift:
+                    shift()
+                    buffer.append(v)
+                else:
+                    check_then_write(v)
             else:
                 if v.startswith("</"):
                     self.depth -= 1
+                buffer.append(v)
 
-            buffer.append(v)
             (closes and self.leave_tag or self.enter_tag)(tag, ctx)
 
         def write_sole(s):
             if not self.is_isolated(ctx.stack):
                 s = _ws_close_bracket_re.sub('>', s)
-            buffer.append(s)
+            check_then_write(s)
+
+        def check_then_write(v):
+            if len(buffer) > 0 and buffer[-1][-1] == ' ':
+                buffer[-1] = buffer[-1][:-1] + v
+            else:
+                buffer.append(v)
 
         #TODO: need to test this
         def write_data(value):
+            #buffer.append('*')
             buffer.append(value)
 
         for match in _tag_re.finditer(ctx.token.value):

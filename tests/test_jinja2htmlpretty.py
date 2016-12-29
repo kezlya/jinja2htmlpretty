@@ -191,14 +191,14 @@ class TestHtmlPretty(unittest.TestCase):
         # Arrange
         tmpl_string = '''
         <html>
-        <title>Hello {{val}} World</title>
+        <title \n\t\r > Hello \n\t\r  {{val}} \n\t\r  World{{val2}} \n\t\r  </title>
         </html>
         '''
         tpl = self.env.from_string(tmpl_string)
-        expected = '''<html>\n{0}<title>Hello Best World</title>\n</html>'''.format(HTMLPretty.SHIFT)
+        expected = '''<html>\n{0}<title>Hello Best World!</title>\n</html>'''.format(HTMLPretty.SHIFT)
 
         # Act
-        result = tpl.render(val='Best').encode('utf8')
+        result = tpl.render(val='Best', val2='!').encode('utf8')
 
         # Assert
         self._compare_html(expected, result)
@@ -208,18 +208,12 @@ class TestHtmlPretty(unittest.TestCase):
         tmpl_string = '''
         <html>
         <input type="checkbox"
-        {% if 1==1 %}
-            selected
-        {% endif %} />
-        <input type="checkbox"
-        {% if 1==1 %}
-            checked
-        {% endif %} />
+        {% if 1==1 %}checked{% endif %}
+        />
         </html>
         '''
         tpl = self.env.from_string(tmpl_string)
-        expected = '<html>\n{0}<input type="checkbox" selected/>' \
-                   '\n{0}<input type="checkbox" checked/>\n</html>'.format(HTMLPretty.SHIFT)
+        expected = '<html>\n{0}<input type="checkbox" checked />\n</html>'.format(HTMLPretty.SHIFT)
 
         # Act
         result = tpl.render().encode('utf8')
