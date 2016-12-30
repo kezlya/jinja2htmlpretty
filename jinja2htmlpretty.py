@@ -36,7 +36,7 @@ class StreamProcessContext(object):
         raise TemplateSyntaxError(message, self.token.lineno,
                                   self.stream.name, self.stream.filename)
 
-
+#TODO convert it once when lib included not on every init
 def _make_dict_from_listing(listing):
     rv = {}
     for keys, value in listing:
@@ -63,136 +63,150 @@ class HTMLPretty(Extension):
         (['dd', 'dt'], set(['dl', 'dt', 'dd']))
     ])
 
-    SHIFT = u'  '
+    #TODO move this to __init__
+    SHIFT = '  '
     last_tag = ''
     depth = 0
     just_closed = False
     start = True
     ctx = None
-    is_iso = False
+    buf = []
+    chunk = None
+    tag = None
+    stack =[]
+    lineno = None
+    filename = None
+    name = None
 
-    def set_is_iso(self):
-        self.is_iso = len(self.ctx.stack) > 0 and self.ctx.stack[-1] in self.isolated_elements
+    def fail(self, message):
+        raise TemplateSyntaxError(message, self.lineno,
+                                  self.name, self.filename)
 
-    #def is_isolated(self):
-    #    return len(self.ctx.stack) > 0 and self.ctx.stack[-1] in self.isolated_elements
-
-    def is_breaking(self, tag, other_tag):
+    def is_breaking(self, other_tag):
         breaking = self.breaking_rules.get(other_tag)
-        return breaking and (tag in breaking or
-            ('#block' in breaking and tag in self.block_elements))
+        return breaking and (self.tag in breaking or
+            ('#block' in breaking and self.tag in self.block_elements))
+
+    def is_isolated(self):
+        for tag in reversed(self.stack):
+            if tag in self.isolated_elements:
+                return True
+        return False
 
     def enter_tag(self, tag):
-        while self.ctx.stack and self.is_breaking(tag, self.ctx.stack[-1]):
-            self.leave_tag(self.ctx.stack[-1])
+        while self.stack and self.is_breaking(self.stack[-1]):
+            self.leave_tag(self.stack[-1])
 
-        if tag != 'br':
-            self.last_tag = tag
-            if tag not in self.void_elements:
-                self.ctx.stack.append(tag)
-                self.is_iso = tag in self.isolated_elements
-                self.depth += 1
-                self.just_closed = False
+        if tag == 'br':
+            return
+        self.last_tag = tag
+        if tag in self.void_elements:
+            return
+        self.stack.append(tag)
+        self.depth += 1
+        self.just_closed = False
 
     def leave_tag(self, tag):
-        if not self.ctx.stack:
-            self.ctx.fail('Tried to leave "%s" but something closed '
-                     'it already' % tag)
-        if tag == self.ctx.stack[-1]:
-            self.ctx.stack.pop()
-            self.set_is_iso()
+        if not self.stack:
+            self.fail('Tried to leave "%s" '
+                      'but something closed it already' % tag)
+        if tag == self.stack[-1]:
+            self.stack.pop()
             return
-        for idx, other_tag in enumerate(reversed(self.ctx.stack)):
+        for idx, other_tag in enumerate(reversed(self.stack)):
             if other_tag == tag:
                 for num in xrange(idx + 1):
-                    self.ctx.stack.pop()
-                    self.set_is_iso()
+                    self.stack.pop()
             elif not self.breaking_rules.get(other_tag):
                 break
 
-    def normalize(self, ctx):
+    def adj_depth(self):
+        if self.chunk.startswith("</") and self.tag != 'br':
+            self.depth -= 1
+
+    def shift(self):
+        self.buf.append('\n')
+        [self.buf.append(self.SHIFT) for _ in xrange(self.depth)]
+
+    def write(self):
+        self.buf.append(self.chunk)
+
+    def check_then_write(self, should_shift):
+        if len(self.buf) > 0 and self.buf[-1][-1] == ' ':
+            self.buf[-1] = self.buf[-1][:-1]
+        if should_shift:
+            self.shift()
+        self.write()
+
+    def write_preamble(self):
+        if self.chunk == '' or self.chunk.strip() == '':
+            return
+        if not self.is_isolated():
+            if self.tag is None:
+                self.clean_quotes()
+            self.chunk = _ws_normalize_re.sub(' ', self.chunk)
+        self.write()
+
+    def write_tag(self):
+        self.chunk = _ws_normalize_re.sub(' ', self.chunk)
+        self.chunk = _ws_open_bracket_re.sub('<', self.chunk)
+        self.check_then_write(self.check_shift())
+
+    def clean_quotes(self):
+        self.chunk = _ws_around_equal_re.sub('="', self.chunk)
+        self.chunk = _ws_around_dquotes_re.sub('"', self.chunk)
+
+    def check_shift(self):
+        if self.tag == 'br':
+            return False
+        if self.chunk.startswith("</"):
+            if self.tag != self.last_tag or self.just_closed:
+                return True
+            self.just_closed = True
+        elif self.chunk.startswith("<"):
+            if self.start:
+                self.start = False
+                if len(self.buf) > 0:
+                    return True
+            else:
+                return True
+        return False
+
+    def write_sole(self):
+        if not self.is_isolated():
+            self.chunk = _ws_close_bracket_re.sub('>', self.chunk)
+        self.check_then_write(False)
+
+    def normalize(self, content):
+        self.buf = []
         pos = 0
-        buffer = []
-        self.ctx = ctx
-
-        def shift():
-            buffer.append(u'\n')
-            [buffer.append(self.SHIFT) for _ in xrange(self.depth)]
-
-        def write_preamble(p, tag):
-            if p == '' or p.strip() == '':
-                return
-
-            if not self.is_iso:
-                if tag is None:
-                    p = _ws_around_equal_re.sub('="', p)
-                    p = _ws_around_dquotes_re.sub('"', p)
-                p = _ws_normalize_re.sub(' ', p)
-
-            buffer.append(p)
-
-        def write_tag(v, tag):
-            should_shift = False
-            v = _ws_normalize_re.sub(' ', v)
-            v = _ws_open_bracket_re.sub('<', v)
-
-            if tag != 'br':
-                if v.startswith("</"):
-                    if tag != self.last_tag or self.just_closed:
-                        should_shift = True
-                    else:
-                        self.just_closed = True
-                elif v.startswith("<"):
-                    if self.start:
-                        self.start = False
-                        if len(buffer) > 0 or self.depth > 0:
-                            should_shift = True
-                    else:
-                        should_shift = True
-
-            check_then_write(v, should_shift)
-
-        def write_sole(s):
-            if not self.is_iso:
-                s = _ws_close_bracket_re.sub('>', s)
-            check_then_write(s, False)
-
-        def check_then_write(val, should_shift):
-            if len(buffer) > 0 and buffer[-1][-1] == ' ':
-                buffer[-1] = buffer[-1][:-1]
-            should_shift and shift()
-            buffer.append(val)
-
-        for match in _tag_re.finditer(ctx.token.value):
-            closes, tag, sole = match.groups()
-            preamble = ctx.token.value[pos:match.start()]
+        for match in _tag_re.finditer(content):
+            closes, self.tag, sole = match.groups()
+            self.chunk = content[pos:match.start()]
+            self.write_preamble()
             pos = match.end()
-            write_preamble(preamble, tag)
             if sole:
-                write_sole(sole)
+                self.chunk = sole
+                self.write_sole()
                 continue
 
-            v = _ws_open_bracket_slash_re.sub('</', match.group())
-            if v.startswith("</") and tag != 'br':
-                self.depth -= 1
+            self.chunk = _ws_open_bracket_slash_re.sub('</', match.group())
+            self.adj_depth()
+            (self.is_isolated() and self.write or self.write_tag)()
+            (closes and self.leave_tag or self.enter_tag)(self.tag)
 
-            if self.is_iso:
-                buffer.append(v)
-            else:
-                write_tag(v, tag)
-
-            (closes and self.leave_tag or self.enter_tag)(tag)
-
-
-        write_preamble(ctx.token.value[pos:], None)
-        return u''.join(buffer)
+        self.chunk = content[pos:]
+        self.write_preamble()
+        return
 
     def filter_stream(self, stream):
-        ctx = StreamProcessContext(stream)
+        self.name = stream.name
+        self.filename = stream.filename
         for token in stream:
             if token.type != 'data':
                 yield token
                 continue
-            ctx.token = token
-            value = self.normalize(ctx)
-            yield Token(token.lineno, 'data', value)
+
+            self.lineno = token.lineno
+            self.normalize(token.value)
+            yield Token(token.lineno, 'data', ''.join(self.buf))
