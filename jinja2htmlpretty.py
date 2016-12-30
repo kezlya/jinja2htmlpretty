@@ -69,12 +69,13 @@ class HTMLPretty(Extension):
     just_closed = False
     start = True
     ctx = None
+    is_iso = False
 
-    def is_isolated(self):
-        for tag in reversed(self.ctx.stack):
-            if tag in self.isolated_elements:
-                return True
-        return False
+    def set_is_iso(self):
+        self.is_iso = len(self.ctx.stack) > 0 and self.ctx.stack[-1] in self.isolated_elements
+
+    #def is_isolated(self):
+    #    return len(self.ctx.stack) > 0 and self.ctx.stack[-1] in self.isolated_elements
 
     def is_breaking(self, tag, other_tag):
         breaking = self.breaking_rules.get(other_tag)
@@ -89,7 +90,7 @@ class HTMLPretty(Extension):
             self.last_tag = tag
             if tag not in self.void_elements:
                 self.ctx.stack.append(tag)
-
+                self.is_iso = tag in self.isolated_elements
                 self.depth += 1
                 self.just_closed = False
 
@@ -99,11 +100,13 @@ class HTMLPretty(Extension):
                      'it already' % tag)
         if tag == self.ctx.stack[-1]:
             self.ctx.stack.pop()
+            self.set_is_iso()
             return
         for idx, other_tag in enumerate(reversed(self.ctx.stack)):
             if other_tag == tag:
                 for num in xrange(idx + 1):
                     self.ctx.stack.pop()
+                    self.set_is_iso()
             elif not self.breaking_rules.get(other_tag):
                 break
 
@@ -120,7 +123,7 @@ class HTMLPretty(Extension):
             if p == '' or p.strip() == '':
                 return
 
-            if not self.is_isolated():
+            if not self.is_iso:
                 if tag is None:
                     p = _ws_around_equal_re.sub('="', p)
                     p = _ws_around_dquotes_re.sub('"', p)
@@ -128,60 +131,59 @@ class HTMLPretty(Extension):
 
             buffer.append(p)
 
-        def write_tag(v, tag, closes):
+        def write_tag(v, tag):
             should_shift = False
-            if not self.is_isolated():
-                v = _ws_normalize_re.sub(' ', v)
-                v = _ws_open_bracket_re.sub('<', v)
-                v = _ws_open_bracket_slash_re.sub('</', v)
+            v = _ws_normalize_re.sub(' ', v)
+            v = _ws_open_bracket_re.sub('<', v)
 
-                if tag != 'br':
-                    if v.startswith("</"):
-                        self.depth -= 1
-                        if tag != self.last_tag or self.just_closed:
-                            should_shift = True
-                        else:
-                            self.just_closed = True
-                    elif v.startswith("<"):
-                        if self.start:
-                            self.start = False
-                            if len(buffer) > 0:
-                                should_shift = True
-                        else:
-                            should_shift = True
-
-                if should_shift:
-                    shift()
-                    buffer.append(v)
-                else:
-                    check_then_write(v)
-            else:
+            if tag != 'br':
                 if v.startswith("</"):
-                    self.depth -= 1
-                buffer.append(v)
+                    if tag != self.last_tag or self.just_closed:
+                        should_shift = True
+                    else:
+                        self.just_closed = True
+                elif v.startswith("<"):
+                    if self.start:
+                        self.start = False
+                        if len(buffer) > 0 or self.depth > 0:
+                            should_shift = True
+                    else:
+                        should_shift = True
 
-            (closes and self.leave_tag or self.enter_tag)(tag)
+            check_then_write(v, should_shift)
 
         def write_sole(s):
-            if not self.is_isolated():
+            if not self.is_iso:
                 s = _ws_close_bracket_re.sub('>', s)
-            check_then_write(s)
+            check_then_write(s, False)
 
-        def check_then_write(v):
+        def check_then_write(val, should_shift):
             if len(buffer) > 0 and buffer[-1][-1] == ' ':
-                buffer[-1] = buffer[-1][:-1] + v
-            else:
-                buffer.append(v)
+                buffer[-1] = buffer[-1][:-1]
+            should_shift and shift()
+            buffer.append(val)
 
         for match in _tag_re.finditer(ctx.token.value):
             closes, tag, sole = match.groups()
             preamble = ctx.token.value[pos:match.start()]
+            pos = match.end()
             write_preamble(preamble, tag)
             if sole:
                 write_sole(sole)
+                continue
+
+            v = _ws_open_bracket_slash_re.sub('</', match.group())
+            if v.startswith("</") and tag != 'br':
+                self.depth -= 1
+
+            if self.is_iso:
+                buffer.append(v)
             else:
-                write_tag(match.group(), tag, closes)
-            pos = match.end()
+                write_tag(v, tag)
+
+            (closes and self.leave_tag or self.enter_tag)(tag)
+
+
         write_preamble(ctx.token.value[pos:], None)
         return u''.join(buffer)
 
