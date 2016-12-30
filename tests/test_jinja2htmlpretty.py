@@ -221,6 +221,27 @@ class TestHtmlPretty(unittest.TestCase):
         # Assert
         self._compare_html(expected, result)
 
+    def test_macros(self):
+        # Arrange
+        tmpl_string = '''
+        {% import "macros.tpl" as macros %}
+        <html>
+            {{macros.add_images(['one','two','five'])}}
+        </html>
+        '''
+        tpl = self.env.from_string(tmpl_string)
+        expected = '<html>' \
+                   '\n{0}<img src="one.jpg" />' \
+                   '\n{0}<img src="two.jpg" />' \
+                   '\n{0}<img src="five.jpg" />' \
+                   '\n</html>'.format(HTMLPretty.SHIFT)
+
+        # Act
+        result = tpl.render().encode('utf8')
+
+        # Assert
+        self._compare_html(expected, result)
+
     def _compare_html(self, expected, result):
         if len(expected) <= len(result):
             length = len(expected)
