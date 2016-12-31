@@ -207,7 +207,7 @@ class TestHtmlPretty(unittest.TestCase):
         # Arrange
         tmpl_string = '''
         <html>
-        <input type="checkbox"
+        <input type \n\t\r = \n\t\r "checkbox"
         {% if 1==1 %}checked{% endif %}
         />
         </html>

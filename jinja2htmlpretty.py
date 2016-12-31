@@ -18,7 +18,7 @@ from jinja2 import TemplateSyntaxError
 _tag_re = re.compile(r'(?:<\s*(/?)\s*([a-zA-Z0-9_-]+)\s*|(>\s*))(?s)')
 _ws_normalize_re = re.compile(r'[ \t\r\n]+')
 
-_ws_around_equal_re = re.compile(r'[ \t\r\n]*=[ \t\r\n]*"[ \t\r\n]*')
+_ws_around_equal_re = re.compile(r' *= *" *')
 _ws_around_dquotes_re = re.compile(r'[ \t\r\n]+"')
 _ws_open_bracket_re = re.compile(r'[ \t\r\n]*<[ \t\r\n]*')
 _ws_open_bracket_slash_re = re.compile(r'[ \t\r\n]*<[ \t\r\n]*/[ \t\r\n]*')
@@ -69,7 +69,6 @@ class HTMLPretty(Extension):
     depth = 0
     just_closed = False
     start = True
-    ctx = None
     buf = []
     chunk = None
     tag = None
@@ -77,6 +76,9 @@ class HTMLPretty(Extension):
     lineno = None
     filename = None
     name = None
+    page = None
+    dontShift = False
+
 
     def fail(self, message):
         raise TemplateSyntaxError(message, self.lineno,
@@ -142,19 +144,16 @@ class HTMLPretty(Extension):
         if self.chunk == '' or self.chunk.strip() == '':
             return
         if not self.is_isolated():
-            if self.tag is None:
-                self.clean_quotes()
             self.chunk = _ws_normalize_re.sub(' ', self.chunk)
+            self.chunk = _ws_around_equal_re.sub('="', self.chunk)
+            if self.tag is None:
+                self.chunk = _ws_around_dquotes_re.sub('"', self.chunk)
         self.write()
 
     def write_tag(self):
         self.chunk = _ws_normalize_re.sub(' ', self.chunk)
         self.chunk = _ws_open_bracket_re.sub('<', self.chunk)
         self.check_then_write(self.check_shift())
-
-    def clean_quotes(self):
-        self.chunk = _ws_around_equal_re.sub('="', self.chunk)
-        self.chunk = _ws_around_dquotes_re.sub('"', self.chunk)
 
     def check_shift(self):
         if self.tag == 'br':
@@ -200,6 +199,8 @@ class HTMLPretty(Extension):
         return
 
     def filter_stream(self, stream):
+        if not self.page:
+            self.page = str(self.filename)
         self.name = stream.name
         self.filename = stream.filename
         for token in stream:
