@@ -1,0 +1,15 @@
+sudo: false
+language: python
+python: 2.7
+cache:
+  pip: true
+
+matrix:
+  include:
+    - os: osx
+      language: generic
+
+before_script:
+- pip install -r requirements.txt
+
+script: tests/test_jinja2htmlpretty.py
