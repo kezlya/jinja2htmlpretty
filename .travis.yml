@@ -12,4 +12,4 @@ matrix:
 before_script:
 - pip install -r requirements.txt
 
-script: tests/test_jinja2htmlpretty.py
+script: python tests/test_jinja2htmlpretty.py
