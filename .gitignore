@@ -91,3 +91,10 @@ test_result.html
 
 #editor files
 *.swp
+tests/coverage
+
+# Mac OS X
+.DS_Store
+
+# IntelliJ
+.idea

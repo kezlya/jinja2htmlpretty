@@ -1,6 +1,13 @@
 import unittest
 import os
+import sys
 from jinja2 import Environment, FileSystemLoader
+import nose
+# Fix the path
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+print base_dir
+sys.path.insert(0, base_dir)
+
 from jinja2htmlpretty import HTMLPretty
 
 
@@ -158,14 +165,14 @@ class TestHtmlPretty(unittest.TestCase):
     def test_full_page(self):
         # Arrange
         tpl = self.env.get_template('test_case.tpl')
-        with open('test_expected.html', 'r') as f:
+        with open('./tests/test_expected.html', 'r') as f:
             expected = f.read()
 
         # Act
         result = tpl.render().encode('utf8')
 
         # Assert
-        with open('test_result.html', 'w') as file_:
+        with open('./tests/test_result.html', 'w') as file_:
             file_.write(result)
         self._compare_html(expected, result)
 
@@ -266,4 +273,10 @@ class TestHtmlPretty(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    res = nose.run(argv=[
+        'test_jinja2htmlpretty.py', '-v', '--with-coverage', '--cover-erase',
+        '--cover-package=jinja2htmlpretty',
+        '--cover-html',
+        '--cover-html-dir=./tests/coverage',
+        '--logging-level=INFO'
+    ])
